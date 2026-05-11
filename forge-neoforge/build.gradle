@@ -12,7 +12,7 @@ base {
     archivesName = mod_id
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 
 sourceSets {
     main {
@@ -27,6 +27,8 @@ sourceSets {
 configurations {
     zstdRuntime
 }
+
+def targetLoader = (project.findProperty('targetLoader') ?: 'forge').toString().toLowerCase()
 
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
@@ -88,6 +90,8 @@ tasks.named('test', Test).configure {
 }
 
 jar {
+    archiveClassifier = targetLoader
+
     // Ship zstd-jni as a nested resource jar and load it through an isolated
     // classloader at runtime. This keeps com.github.luben.zstd out of the
     // Minecraft module layer while preserving the original JNI class names.
@@ -113,7 +117,10 @@ jar {
                 'MixinConfigs'            : "${mod_id}.mixins.json"
         ])
     }
-    finalizedBy 'reobfJar'
+    def reobfJarTask = tasks.findByName('reobfJar')
+    if (reobfJarTask != null) {
+        finalizedBy reobfJarTask
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {

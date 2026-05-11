@@ -75,7 +75,7 @@ public final class LinearBackedRegionFile extends RegionFile {
      */
     @SuppressWarnings("DataFlowIssue")
     private LinearBackedRegionFile() throws IOException {
-        super(null, null, false); // unreachable
+        super((net.minecraft.world.level.chunk.storage.RegionStorageInfo) null, null, null, false); // unreachable
     }
 
     /**

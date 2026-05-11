@@ -1,0 +1,29 @@
+name: Build NeoForge
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-neoforge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.7
+      - uses: actions/setup-java@v4.2.1
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build NeoForge
+        run: ./gradlew --no-daemon buildNeoForge
+      - name: Upload NeoForge jar
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: linearreader-neoforge
+          path: forge-neoforge/build/libs/*-neoforge.jar
+          if-no-files-found: error

@@ -23,7 +23,7 @@ public final class LinearCorpusGenerator {
         generate(root);
     }
 
-    static void generate(Path root) throws IOException {
+    public static void generate(Path root) throws IOException {
         LinearTestSupport.resetState();
         LinearTestSupport.deleteTree(root.resolve("files"));
         LinearTestSupport.deleteTree(root.resolve("worlds"));
