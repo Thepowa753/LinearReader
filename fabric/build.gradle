@@ -7,7 +7,7 @@ version = mod_version
 group = mod_group_id
 
 base {
-	archivesName = mod_id + "-fabric"
+	archivesName = mod_id
 }
 
 java {
@@ -92,6 +92,8 @@ tasks.register('generateTestCorpus', JavaExec) {
 }
 
 jar {
+	archiveClassifier = 'fabric'
+
 	from("LICENSE.txt") { into "/" }
 	from("licenses/") { into "licenses/" }
 	from("README.md") { into("/")}
