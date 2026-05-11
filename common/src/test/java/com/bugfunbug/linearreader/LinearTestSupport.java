@@ -1,6 +1,7 @@
 package com.bugfunbug.linearreader;
 
 import com.bugfunbug.linearreader.config.LinearConfig;
+import com.bugfunbug.linearreader.linear.LinearCorpusGenerator;
 import com.bugfunbug.linearreader.linear.LinearRegionFile;
 
 import java.io.IOException;
@@ -15,6 +16,8 @@ import java.util.Objects;
 public final class LinearTestSupport {
 
     private LinearTestSupport() {}
+
+    private static volatile Path generatedCorpusRoot;
 
     public static void resetState() {
         LinearConfig.update(
@@ -61,13 +64,44 @@ public final class LinearTestSupport {
 
     public static Path resourcePath(String resourcePath) {
         URL url = LinearTestSupport.class.getClassLoader().getResource(resourcePath);
-        if (url == null) {
-            throw new IllegalArgumentException("Missing test resource: " + resourcePath);
+        if (url != null) {
+            try {
+                return Path.of(url.toURI());
+            } catch (URISyntaxException e) {
+                throw new IllegalStateException("Could not resolve resource URI: " + resourcePath, e);
+            }
         }
-        try {
-            return Path.of(url.toURI());
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException("Could not resolve resource URI: " + resourcePath, e);
+
+        if (resourcePath.startsWith("corpus/")) {
+            Path generatedRoot = ensureGeneratedCorpusRoot();
+            Path generatedPath = generatedRoot.resolve(resourcePath.substring("corpus/".length()));
+            if (Files.exists(generatedPath)) {
+                return generatedPath;
+            }
+        }
+
+        throw new IllegalArgumentException("Missing test resource: " + resourcePath);
+    }
+
+    private static Path ensureGeneratedCorpusRoot() {
+        Path cached = generatedCorpusRoot;
+        if (cached != null && Files.exists(cached)) {
+            return cached;
+        }
+
+        synchronized (LinearTestSupport.class) {
+            cached = generatedCorpusRoot;
+            if (cached != null && Files.exists(cached)) {
+                return cached;
+            }
+            try {
+                Path root = Files.createTempDirectory("linearreader-generated-corpus");
+                LinearCorpusGenerator.generate(root);
+                generatedCorpusRoot = root;
+                return root;
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not generate shared test corpus", e);
+            }
         }
     }
 
