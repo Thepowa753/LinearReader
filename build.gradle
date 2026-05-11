@@ -4,54 +4,51 @@ plugins {
     id 'base'
 }
 
-def wrapperCommand = { String taskName ->
+def wrapperCommand = { String taskName, List<String> extraArgs ->
     if (OperatingSystem.current().isWindows()) {
-        return ['cmd', '/c', 'gradlew.bat', taskName]
+        return ['cmd', '/c', 'gradlew.bat', taskName] + extraArgs
     }
-    return ['./gradlew', taskName]
+    return ['./gradlew', taskName] + extraArgs
 }
 
-def registerChildTask = { String name, String childDir, String childTask ->
+def registerChildTask = { String name, String childDir, String childTask, List<String> extraArgs = [] ->
     tasks.register(name, Exec) {
         group = 'linearreader'
         description = "Runs ${childTask} in ${childDir}."
         workingDir = file(childDir)
-        commandLine(wrapperCommand(childTask))
+        commandLine(wrapperCommand(childTask, extraArgs))
     }
 }
 
 registerChildTask('compileFabric', 'fabric', 'compileJava')
-registerChildTask('compileForgeNeoForge', 'forge-neoforge', 'compileJava')
+registerChildTask('compileForge', 'forge-neoforge', 'compileJava', ['-PtargetLoader=forge'])
+registerChildTask('compileNeoForge', 'forge-neoforge', 'compileJava', ['-PtargetLoader=neoforge'])
 registerChildTask('buildFabric', 'fabric', 'build')
-registerChildTask('buildForgeNeoForge', 'forge-neoforge', 'build')
+registerChildTask('buildForge', 'forge-neoforge', 'build', ['-PtargetLoader=forge'])
+registerChildTask('buildNeoForge', 'forge-neoforge', 'build', ['-PtargetLoader=neoforge'])
 registerChildTask('cleanFabric', 'fabric', 'clean')
 registerChildTask('cleanForgeNeoForge', 'forge-neoforge', 'clean')
 registerChildTask('testFabric', 'fabric', 'test')
-registerChildTask('testForgeNeoForge', 'forge-neoforge', 'test')
+registerChildTask('testForge', 'forge-neoforge', 'test', ['-PtargetLoader=forge'])
+registerChildTask('testNeoForge', 'forge-neoforge', 'test', ['-PtargetLoader=neoforge'])
 registerChildTask('generateTestCorpus', 'fabric', 'generateTestCorpus')
 
 tasks.register('compileAll') {
     group = 'linearreader'
-    description = 'Compiles both loader targets.'
-    dependsOn 'compileFabric', 'compileForgeNeoForge'
-}
-
-tasks.register('buildForge') {
-    group = 'linearreader'
-    description = 'Alias for buildForgeNeoForge.'
-    dependsOn 'buildForgeNeoForge'
+    description = 'Compiles all loader targets.'
+    dependsOn 'compileFabric', 'compileForge', 'compileNeoForge'
 }
 
 tasks.register('buildAll') {
     group = 'linearreader'
-    description = 'Builds both loader targets.'
-    dependsOn 'buildFabric', 'buildForgeNeoForge'
+    description = 'Builds all loader targets.'
+    dependsOn 'buildFabric', 'buildForge', 'buildNeoForge'
 }
 
 tasks.register('testAll') {
     group = 'linearreader'
     description = 'Runs the shared storage test suite in all loader environments.'
-    dependsOn 'testFabric', 'testForgeNeoForge'
+    dependsOn 'testFabric', 'testForge', 'testNeoForge'
 }
 
 tasks.register('cleanAll') {
@@ -61,7 +58,7 @@ tasks.register('cleanAll') {
 }
 
 tasks.named('check').configure {
-    dependsOn 'testFabric', 'testForgeNeoForge'
+    dependsOn 'testFabric', 'testForge', 'testNeoForge'
 }
 
 tasks.register('collectJars', Copy) {
@@ -77,8 +74,14 @@ tasks.register('collectJars', Copy) {
     }
 
     from('forge-neoforge/build/libs') {
-        include '*.jar'
+        include '*-forge.jar'
         exclude '*-sources.jar', '*-javadoc.jar'
-        into 'forge-neoforge'
+        into 'forge'
+    }
+
+    from('forge-neoforge/build/libs') {
+        include '*-neoforge.jar'
+        exclude '*-sources.jar', '*-javadoc.jar'
+        into 'neoforge'
     }
 }

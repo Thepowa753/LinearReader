@@ -1,0 +1,26 @@
+name: Build Forge
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-forge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.7
+      - uses: actions/setup-java@v4.2.1
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: Build Forge
+        run: ./gradlew --no-daemon buildForge
+      - name: Upload Forge jar
+        uses: actions/upload-artifact@v4.3.3
+        with:
+          name: linearreader-forge
+          path: forge-neoforge/build/libs/*-forge.jar
+          if-no-files-found: error
