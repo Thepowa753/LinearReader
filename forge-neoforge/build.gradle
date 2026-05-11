@@ -117,7 +117,10 @@ jar {
                 'MixinConfigs'            : "${mod_id}.mixins.json"
         ])
     }
-    finalizedBy 'reobfJar'
+    def reobfJarTask = tasks.findByName('reobfJar')
+    if (reobfJarTask != null) {
+        finalizedBy reobfJarTask
+    }
 }
 
 tasks.named('processResources', ProcessResources).configure {

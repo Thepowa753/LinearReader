@@ -5,6 +5,7 @@ import com.bugfunbug.linearreader.LinearStats;
 import com.bugfunbug.linearreader.linear.*;
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.StreamTagVisitor;
 import net.minecraft.world.level.ChunkPos;
@@ -126,9 +127,9 @@ public abstract class RegionFileStorageMixin {
             if (dis == null) return null;
             return NbtIo.read(dis);
         } catch (IOException e) {
-            LinearRuntime.LOGGER.error("[LinearReader] Failed to read chunk {}: {}",
+            LinearRuntime.LOGGER.error("[LinearReader] Failed to read .linear chunk {} (corrupted file? using fallback null chunk): {}",
                     pos, e.getMessage(), e);
-            throw e;
+            return null;
         }
     }
 
@@ -241,11 +242,11 @@ public abstract class RegionFileStorageMixin {
         LinearRegionFile region = linearGetOrCreate(pos, true);
         if (region == null) return;
         try (DataInputStream dis = region.read(pos)) {
-            if (dis != null) NbtIo.parse(dis, visitor);
+            if (dis != null) NbtIo.parse(dis, visitor, NbtAccounter.unlimitedHeap());
         } catch (IOException e) {
-            LinearRuntime.LOGGER.error("[LinearReader] Failed to scan chunk {}: {}",
+            LinearRuntime.LOGGER.error("[LinearReader] Failed to scan .linear chunk {} (corrupted file? skipping scan): {}",
                     pos, e.getMessage(), e);
-            throw e;
+            return;
         }
     }
 }
